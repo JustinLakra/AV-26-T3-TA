@@ -6,6 +6,16 @@ being controlled (as opposed to the controller, the thing you write to drive
 it). Your task is to recover the bench data from the logs, work out how the
 actuator behaves, and write a C++ controller that holds a commanded angle.
 
+## Getting Started
+
+Fork this repo and clone your fork. Work there, not on the original.
+
+You'll need a C++17 compiler (`c++`/g++/clang) on `PATH`. `python3` +
+matplotlib are optional, for the plotting scripts. This works out of the box
+on Linux and macOS. **On Windows, use WSL** — the build commands in this
+README assume a Unix-style toolchain (`c++ -std=c++17 ...`) that plain
+PowerShell/cmd doesn't have by default.
+
 ## What's in this package
 
 ```
@@ -107,7 +117,7 @@ Once both look right, push your `plant.hpp` parameters up and down and re-run
 Check 2 - the real actuator won't match your estimate exactly, so gains that
 only work for one exact model aren't good gains.
 
-## Resources to help you get started:
+## Resources:
 https://www.csselectronics.com/pages/can-bus-simple-intro-tutorial
 https://www.csselectronics.com/pages/can-dbc-file-database-intro
 https://www.geeksforgeeks.org/electronics-engineering/control-system-tutorial/
