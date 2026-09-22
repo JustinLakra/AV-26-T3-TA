@@ -1,13 +1,31 @@
 ### Part A - recover the data (CAN decode)
 
-Frame ID kept:
+Comparing the CAN bus data in the video to step_test.log, I identified the following parts:
+The first is the timestampEpoch, next is vcan0, which is probably the channel name, then the frame ID, and finally the data bytes.
+Looking at the SteeringBench.dbc file, I am assuming that the data is split this way:
+bits 0-16: MeasuredAngle,
+bits 16-32: CmdAngularRate,
+bits 32-48: SupplyMilliVolts,
+bits 48-64: ActuatorTemp.
 
-Signal 1 (u_commanded):  byte position / endianness / signed? / scale / offset:
-Signal 2 (y_measured):   byte position / endianness / signed? / scale / offset:
+My assumption should be confirmed once I go over the explanation of a dbc file given in the resources. Not sure about the endianness, but I am assuming it is little-endian, since that is the most common.
+
+Going through the dbc explanation resource, I found that the endianness is indeed little-endian because of the '@1' in the dbc file. The scale, offset and the min and max values are also given in the dbc file, so I can use those to find the physical values of the signals. I am assuming we have to clamp the values to the min and max values given in the dbc file, after calculating the physical values using the formula: physical_value = offset + scale * raw_value_decimal. The units are also given, making it easier to identify which values are to be decoded for part A.
+
+Extracting the data and the IDs from the file was simple: I used the substring function to get them, then converted them to integers. For the data, I realized that i only had to read 32 bits, since the other 32 are not used for this part. I extracted the first 4 bytes, then applied a manual bitshift to switch the order to little-endian, then used that to calculate the physical values of the signals using the formula. Since the min/max values were given as [0,0], they were optional for the signals that I had to extract in this part. Also, the offset was also 0, so I only had to use the scale.
+
+Frame ID kept: 0x200 or 512 in decimal.
+
+Signal 1 (u_commanded):  byte position / endianness / signed? / scale / offset: 2-3 (bits: 16-31) (2 bytes or 16 bits) / little-endian / signed / 0.1 / 0
+Signal 2 (y_measured):   byte position / endianness / signed? / scale / offset: 0-1 (bits: 0-15) (2 bytes or 16 bits) / little-endian / signed / 0.1 / 0
 
 Notes (anything odd in the logs, how you checked the decode against the PNGs):
 
+At first, I got random values for the signals, which made me realise that I forgot to bitshift the data to little-endian. Since the C++ version was 17, so I could not use the std::byteswap function, I had to do it manually like in COMP1521. After doing that, I got the correct values for the signals. I checked this by running the python script to plot the data and comparing it to the PNGs, which matched perfectly.
 
+Didn't really find anything odd in the logs, but I did find that some had different IDs, and that the timestamps were not really uniform, but that was expected since it was from a real system.
+
+Going through the code at first, I was able to make certain assumptions about the data and what I had to do. Going through the resources provided, I was able to confirm those assumptions which were mostly on the right track.
 
 ### Part B - identify system
 
