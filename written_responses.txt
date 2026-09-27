@@ -98,3 +98,14 @@ No anti-windup since its a solution for the integral term accumulating and becom
 NOTE: there was one set of values for which the graph was oscillating, however I did not record that value.
 
 ### Part D - reflection
+
+A: The byte order: I read it with stoull first and it read those numbers in big-endian, giving me useless values. I shifted the bits manually, taking only bits 0-32 and used | to combine them. Could not use std::byteswap since it was a C++23 feature. 
+
+B: I built my first plant with no nonlinearity and got max errs: 2.5, 2.7 and 2.5. These were quite similar and after applying a backlash with the value 2.5, the values matched. However, this value was hiding in the fact that the difference in angle in the csv files showed that the actual angle differed by the expected angle by around 2.5, which was this max err value. At first, I wasn't too sure about this value, but after searching for how to estimate this value, I confirmed that this was a good enough estimation, and also justified my choice of using this value in both the code (comment) and response.
+
+C: The spikes in cmd in the graph occurred only at target changes, which narrowed it to the exact term (the derivatives) which was causing the issue. I realized that the change in error with respect to time isn't the speed. the change in measured with respect to time would give the correct speed. changing to this removed the spikes from the graph.
+The filter I implemented in part c appeared to do nothing. I changed kd to 0.11 first which removed most of the noise on its own. Having a RC value of 0.005 caused the filter to barely do anything. I reworked the limits, and tried running it with different RC values to get the filter working.
+
+Setting ki to 0.5 caused overshoots, errors and long settling times. Since the kp and kd values alone were enough to reduce overshooting and errors, I decided to keep ki at 0.0.
+
+I began each subproblem by making an assumption, then I tried going through the resources, then broke the sub problem into easier problems or questions to search up, and then tried implementing it. Most of it did not work at first, so I checked the data which told me what was missing. 
