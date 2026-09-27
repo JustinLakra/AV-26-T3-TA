@@ -59,9 +59,42 @@ After running the previous code, I got 3 max err values- 2.5, 2.7 and 2.5
 Searching up for figuring out backlash nonlinearity in an actuator, I got results saying that I have to calculate how much it deviates from the actual value, which I assumed the checks already do. 
 Upon using the value 2.5 for the backlash, the checks told me that my values looked alright.
 
+Proper justification for nonlinearity size (written as a comment as well in plant.hpp):
+When I looked at the reversal_test without the backlash, the difference in y_predicted and y_measured was 2.5. Since backlash is when the motion is lost when reversing direction, the actual system is 2.5 deg behind the ideal angle. Also, one correction: since its idealAngle +/- 2.5, the size of the nonlinearity is 2 * 2.5 = 5.0 and not 2.5.
+
+NOTE: THIS IS NOT AI I CORRECTED THIS MYSELF BECAUSE I REALISED THAT IT WOULD BE 5.0 AND NOT 2.5. I KEPT MY ORIGINAL MISTAKE TO SHOW MY THOUGHT PROCESS AND HOW I CORRECTED IT.
 
 ### Part C - control design choices
 
+Used the formula kp * e(t) + ki * integral of e(t) + kd * derivative of e(t).
+cmd reached values of around 3000 deg/s. The derivative was taken from the error, instead of the measured angle. 
+This produced a false speed of the system- 3000 deg/s, and caused a command spike. When the target jumps, the error jumps as well, even though the system hasn't moved at all. Since we are dividing it by dt, it causes a massive spike in cmd.
+So the fix was to work the speed out from the change in measured angles, which gives us the actual speed.
 
+Next, There was too much noise, and after looking at this source: https://industrialmonitordirect.com/blogs/knowledgebase/pid-controller-tuning-kp-ki-kd-parameters-explained?srsltid=AU7gw4XcbiCxyKtGY6rQCluzT34LbmG6RzL3s0s8CXvy8WiGoFHme6cF I decided to use a low pass filter on the derivative.
+
+Here's the source for the low pass filter I found on reddit: https://en.wikipedia.org/wiki/Low-pass_filter#Discrete-time_realization
+I had to figure out RC, the time constant for the filter. The ticks in controller.csv are 0.005s apart, so the filter would go over just a single tick: this caused zero change in the graph.
+For the filter to be meaningful, it had to go over more ticks. Assuming 10 ticks, per RC seconds, RC had to be greater than 0.02. 
+We reach our target in around 1 second (based on the data), so an RC of 1.0 would be useless, since we would have already reached our target by then. Therefore, RC would have to be much less than 1.0, but also greater than 0.02.
+I chose 0.05 for the RC value since it lies in between 0.1 (1 order of magnitude less than 1.0) and 0.02.
+
+Now, for the values of kp, ki and kd, and tuning them. 
+I went with the manual method of tuning these values, starting with kp = 2.0, and the rest all set to 0.0.
+There was no overshoot, or err, but the time to settle was quite slow.
+I tried increasing it further- 16.0 and there was overshoot, and the settling time had increased.
+So I went back to 4.0- no overshoot and shorter time than 2.0.
+Now, I tried increasing kd to 2.0- this significantly lowered the time, however there was still quite a lot of noise, even with the filter.
+So after decreasing the value of kd, I finally found a value which worked quite well.
+I went with kp and kd values of 3.4 and 0.110 respectively.
+
+Now, increasing the ki even by 0.5 caused a massive increase in err, overshoot and time to settle.
+Even with ki set to 0, there was no error or overshoot. Therefore, I decided to keep it at 0.0.
+
+When changing the values of K, tau and backlash to 1.7, 0.1 and 3.0 respectively, I noticed that the on-centre trim improved, reversal improved in time but had err -0.10 and had overshot, and large move had err, overshot and was way slower.
+
+No anti-windup since its a solution for the integral term accumulating and becoming too large and we have ki set to 0.0, so it isn't required.
+
+NOTE: there was one set of values for which the graph was oscillating, however I did not record that value.
 
 ### Part D - reflection
