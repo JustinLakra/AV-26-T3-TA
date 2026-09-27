@@ -57,6 +57,7 @@ std::vector<Row> decodeLog(const std::string &path) {
 
   // TODO: your code here
   std::ifstream file(path);
+  // just for debugging
   if (!file.is_open()) {
     std::cerr << "Failed to open file: " << path << std::endl;
   }

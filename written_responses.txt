@@ -29,6 +29,35 @@ Going through the code at first, I was able to make certain assumptions about th
 
 ### Part B - identify system
 
+Part B was to work out the actuator, and write the code down for it in plant.hpp. The Readme gave me the first few hints: first-order system with lag and one nonlinearity near the operating point.
+
+So I searched up how to work out an actuator in a first-order system. I got the equation:
+tau * dy(t)/dt + y(t) = K * u(t).
+The constants were tau and K which were unknown, so to calculate them I did this (got the method through a google search):
+We needed the slope of the graph in step_test, and then had to divide the slope by the step input, which was 15 deg/s. 
+For change in y, I took the value to be 50 - 0, so the time had to be t50 - t0 (when the output started moving, not from when the command stepped). Calculating these, I got slope = 50 / 2.565, which was equal to approximately 19.493.
+To calculate tau, I took the time at which the input stepped to 0, and the final value after settling. these values were 54.8 deg and 56.1 deg respectively.
+Subtracting them, I got 1.3. Now this was the extra distance(angle) travelled by the system. So to find tau (time constant), I had to divide this by the speed at which the system was rising- which was the slope we calculated before.
+Since time = distance / speed, dividing 1.3 by 19.493, gives us approximately 0.07 (something around 0.0699) for the time constant tau.
+
+Now,
+u(t) was u_cmd. and y(t) was the speed, but we needed the measured output angle in deg. 
+Setting dy(t)/dt to be (y_n - y_o) / dt,
+I rearranged the equation:
+y_n = y_o + ((K * u(t) - y_o ) * dt ) / tau
+Since dy(t)/dt meant a change in y with respect to time, I took y_n to be the new speed and y_o to be the previous speed which we store in the Struct Plant.
+Now I calculated the angle, which was y_n * dt (distance = speed * time) and added it to the angle value in the Struct.
+And then I just used the provided return statement. 
+
+Next, I had to look at deadband_test near zero commanded rate, (which in this case was +/- 2) and figure out if the nonlinearity was a deadzone or a backlash.
+
+Looking at the differences of both of those nonlinearities, a deadzone had no memory, and produced zero output with small inputs.
+Meanwhile, a backlash had memory and lost motion when reversing direction. In the graph, u_commanded starts at +2, then after some time goes to -2. The y_measured graph rises linearly from 0 to somewhere around 2.5, and then flattens out and doesn't change afterwards.
+This confirms that this is a backlash nonlinearity.
+
+After running the previous code, I got 3 max err values- 2.5, 2.7 and 2.5
+Searching up for figuring out backlash nonlinearity in an actuator, I got results saying that I have to calculate how much it deviates from the actual value, which I assumed the checks already do. 
+Upon using the value 2.5 for the backlash, the checks told me that my values looked alright.
 
 
 ### Part C - control design choices
