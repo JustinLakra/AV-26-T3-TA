@@ -14,6 +14,12 @@ constexpr double TAU = 0.07;
 constexpr double backlash =
     2.5; // taken from the error returned by the check code when running without
          // applying nonlinearity (backlash)
+         // Looking at reversal_test without the backlash applied, the
+         // difference in y_predicted and y_measured is 2.5, Since a backlash is
+         // the motion lost when reversing direction, the actual system is 2.5
+         // deg behind the ideal angle, so applying a backlash of 2.5 and
+         // clamping it according to this source:
+         // https://www.mathworks.com/help/simulink/slref/backlash.html
 
 struct Plant {
   // add whatever state your model needs (velocity, motor-side angle, ...)
