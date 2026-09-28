@@ -14,7 +14,8 @@ public:
     double error = target - measured;
     // since integral keeps accumulating, we need to store it.
     integral += error * dt;
-    // derivative is just change in error / dt, so we just store prev_error
+    // raw derivative (without filter) is just change in measured / dt, so we
+    // just store prev_measured
     double raw_derivative = -(measured - prev_measured) / dt;
     prev_measured = measured;
     double alpha = dt / (RC + dt);
